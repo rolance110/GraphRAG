@@ -18,7 +18,7 @@
   Replace `<script>` with paths like `scripts/query_graph.py` to ensure dependencies from the `base` environment are available.
 - Build/inspect the knowledge graph: `python scripts/build_graph.py data [--export-graphml graphrag.graphml]`.
 - Run a retrieval session: `python scripts/query_graph.py data "How does GraphRAG use knowledge graphs?"`.
-- Use Gemini synthesis (defaults to `models/gemini-1.5-flash`; the loader auto-adds `models/` if missing, so variants like `gemini-flash-latest`, `gemini-1.5-flash-lite`, or `gemma-312b-it` all work):  
+- Use Gemini synthesis (defaults to `models/gemini-2.0-flash`; the loader auto-adds `models/` if missing, so variants like `gemini-flash-latest`, or `gemma-312b-it` all work):  
   `python scripts/query_graph.py data "How does GraphRAG use knowledge graphs?" --use-gemini`.
 - If Gemini returns a finish-reason message instead of text, reduce `--top-k`, trim your prompt, or bump `--gemini-max-output-tokens` to avoid truncation.
 - When developing modules interactively, use `python -m pip install -e .` after adding a `setup.cfg` or rely on `PYTHONPATH=.` for local imports.
@@ -45,3 +45,11 @@
 - Treat `data/` as sample content—avoid committing proprietary documents. Document provenance for any new corpus.
 - When exporting graphs, keep filenames descriptive (`graphrag_<dataset>.graphml`) and add them to `.gitignore` if they are large.
 - Sensitive configuration (API keys, etc.) should stay out of this repo; add values to the `.env` file (auto-loaded via `python-dotenv`) or set them as environment variables.
+
+## Documentation Checklist
+- Markdown files that require synchronized updates:
+  - `README.md`
+  - `AGENTS.md`
+  - `docs/繁體中文快速指南.md`
+  - `docs/程式碼教學.md`
+- When modifying project behaviour or commands, ensure relevant guidance is reflected across the appropriate documents above (e.g., main README plus localized/agent docs).
