@@ -22,10 +22,10 @@ def build_graph(
 
     for chunk in chunks:
         graph.add_node(
-            chunk.chunk_id,
-            type="chunk",
-            doc_id=chunk.doc_id,
-            text=chunk.text,
+            chunk.chunk_id, # Node ID
+            type="chunk", # Node Property
+            doc_id=chunk.doc_id, # Node Property
+            text=chunk.text, # Node Property
         )
 
     for entity in entities.values():
