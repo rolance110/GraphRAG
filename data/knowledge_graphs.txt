@@ -1,0 +1,3 @@
+Knowledge graphs organise concepts as nodes and connect them with typed edges. They act as a compact map of a domain. Because every edge can carry semantic meaning, knowledge graphs are well suited for multi-hop reasoning. Popular public examples include Wikidata and ConceptNet. In enterprise settings, a company might build a knowledge graph to link products, customer issues, regulations, and subject matter experts.
+
+GraphRAG relies on knowledge graphs as a retrieval backbone. When a question arrives, the graph can be traversed to discover related entities even if the literal words never appear in the same passage. This complements dense embeddings. The graph provides explainability because each answer can cite concrete nodes and edges that justified the retrieval.
