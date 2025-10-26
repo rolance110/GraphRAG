@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 
 from .chunker import Chunk, chunk_corpus
 from .data_loader import Document, load_documents
 from .embedder import BagOfWordsEmbedder
 from .entity_extraction import Entity, extract_entities, extract_relations
 from .graph_builder import Graph, build_graph
+from .gemini import GeminiAnswerGenerator, GeminiConfig
 from .retrieval import GraphRetriever, RetrievalResult
 
 
@@ -71,6 +72,42 @@ class GraphRAGPipeline:
     def query(self, question: str, top_k: int = 3) -> str:
         results = self.retrieve(question, top_k=top_k)
         answer = self._synthesise_answer(question, results)
+        context = "\n\n".join(
+            f"[{idx+1}] Score={result.score:.2f} Trail -> {' -> '.join(result.trail)}\n{result.text}"
+            for idx, result in enumerate(results[:top_k])
+        )
+        return f"Question: {question}\n\nAnswer:\n{answer}\n\nContext:\n{context}"
+
+    def query_with_gemini(
+        self,
+        question: str,
+        top_k: int = 3,
+        *,
+        api_key: Optional[str] = None,
+        model: str = "models/gemini-1.5-flash",
+        temperature: float = 0.2,
+        max_output_tokens: int = 512,
+        env_var: str = "GOOGLE_GEMINI_API_KEY",
+    ) -> str:
+        results = self.retrieve(question, top_k=top_k)
+        contexts = [result.text for result in results[:top_k]]
+        if api_key:
+            config = GeminiConfig(
+                api_key=api_key,
+                model=model,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+            )
+        else:
+            config = GeminiConfig.from_env(
+                env_var=env_var,
+                model=model,
+                temperature=temperature,
+                max_output_tokens=max_output_tokens,
+            )
+
+        generator = GeminiAnswerGenerator(config)
+        answer = generator.answer(question, contexts)
         context = "\n\n".join(
             f"[{idx+1}] Score={result.score:.2f} Trail -> {' -> '.join(result.trail)}\n{result.text}"
             for idx, result in enumerate(results[:top_k])

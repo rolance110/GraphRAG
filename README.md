@@ -1,14 +1,20 @@
 # GraphRAG Practice Lab
 
-This repository is a self-contained playground for learning graph-based retrieval-augmented generation (GraphRAG). The code avoids external APIs and keeps the NLP components lightweight so you can focus on how knowledge graphs strengthen retrieval.
+GraphRAG Practice Lab is a self-contained playground for understanding how knowledge graphs strengthen retrieval-augmented generation (RAG). Every component ships with transparent, lightweight implementations so you can inspect the full pipeline and progressively swap in production-ready alternatives.
 
-## Why GraphRAG
+## Project Overview
 
-- **Structured reasoning**: knowledge graphs hold entities and relationships explicitly, enabling multi-hop traversal that dense vectors alone often miss.
-- **Explainability**: every answer cites the graph trail that gathered supporting evidence.
-- **Modularity**: each stage (chunking, extraction, graph building, retrieval, synthesis) can be swapped independently as your skills grow.
+**Goals**
+- demystify graph-aware retrieval by walking through a complete, reproducible pipeline
+- highlight where graphs add explainability and multi-hop reasoning beyond dense vectors
+- provide modular hooks so you can iterate on individual stages without rewriting the system
 
-## What You Build
+**Key Features**
+- Structured reasoning via explicit entities and relationships
+- End-to-end transparency: every answer surfaces the supporting trail
+- Drop-in extensibility across chunking, extraction, embedding, graph building, retrieval, and synthesis
+
+### Pipeline at a Glance
 
 ```
 documents -> chunks -> entity extraction -> graph construction
@@ -19,20 +25,20 @@ documents -> chunks -> entity extraction -> graph construction
                        ----------> synthesis ----------
 ```
 
-1. **Ingest documents** from `data/` (plain text or markdown).
-2. **Chunk** them into overlapping passages that mimic token windows.
-3. **Extract entities and relations** with a simple heuristic (capitalised n-grams plus co-occurrence).
-4. **Build a heterogeneous graph** (chunks plus entities) with NetworkX.
-5. **Embed chunks** using a minimal TF-IDF style bag-of-words encoder.
-6. **Retrieve** by blending vector scores with short graph walks.
-7. **Synthesise** a response by stitching together the highest scoring passages.
+1. **Load documents** from `data/` (plain text or markdown) with `data_loader.py`.
+2. **Chunk** into overlapping windows in `chunker.py` to mimic model token limits.
+3. **Extract entities and relations** using heuristic capitalised n-grams in `entity_extraction.py`.
+4. **Build the heterogeneous graph** of chunks and entities via NetworkX in `graph_builder.py`.
+5. **Embed chunks** with a handcrafted TF-IDF encoder in `embedder.py`.
+6. **Blend retrieval scores** by combining vector similarity and short graph walks in `retrieval.py`.
+7. **Synthesise responses** by stitching together the highest scoring context in `pipeline.py`.
 
 The defaults are intentionally simple so you can understand every line before replacing pieces with production-grade alternatives.
 
 ## Repository Layout
 
 - `data/`: starter corpus describing GraphRAG concepts.
-- `graphrag/`: the reusable Python package.
+- `graphrag/`: reusable Python package organised by pipeline stage.
   - `data_loader.py`: loads `.txt`/`.md` files into memory.
   - `chunker.py`: turns documents into overlapping windows.
   - `entity_extraction.py`: naive entity and relation finder.
@@ -43,34 +49,60 @@ The defaults are intentionally simple so you can understand every line before re
 - `scripts/`: command-line helpers.
   - `build_graph.py`: inspect the graph summary (and optionally export GraphML).
   - `query_graph.py`: run an interactive style question.
-- `requirements.txt`: minimal dependencies.
+- `requirements.txt`: minimal dependencies for the playground.
 
-## Setup
+## Environment Setup
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-Everything else uses the Python standard library.
+Everything else relies on the Python standard library. For editable installs during development, run `python -m pip install -e .` or set `PYTHONPATH=.` when invoking scripts.
 
-## Quickstart
+## Command Reference
 
-Inspect the graph:
+- **Build & Inspect the Graph**
+  ```bash
+  python scripts/build_graph.py data
+  # Optional export for Gephi or Neo4j Bloom:
+  python scripts/build_graph.py data --export-graphml graphrag.graphml
+  ```
+
+- **Query the GraphRAG Pipeline**
+  ```bash
+  python scripts/query_graph.py data "How does GraphRAG use knowledge graphs?"
+  ```
+  Add `--use-gemini` to synthesise with Gemini models (defaults to `models/gemini-1.5-flash`). If the model returns a finish-reason notice, reduce `--top-k` or increase `--gemini-max-output-tokens`.
+
+- **Visualise the Graph**
+  ```bash
+  python scripts/visualize_graph.py data --output graphrag_graph.png --layout spring
+  ```
+  Supply `--focus-question "GraphRAG basics?" --top-k 5` to highlight the retrieval trail for a specific query, or `--with-labels` to print chunk/entity labels on the graph.
+
+## Testing
+
+Tests live in `tests/` and mirror the package structure (e.g. `tests/test_chunker.py`). Start by installing a test runner:
 
 ```bash
-python scripts/build_graph.py data
-# optional: python scripts/build_graph.py data --export-graphml graphrag.graphml
+python -m pip install pytest  # or add pytest to requirements-dev.txt
 ```
 
-Ask a question:
+Run the full suite with Pytest:
 
 ```bash
-python scripts/query_graph.py data "How does GraphRAG use knowledge graphs?"
+pytest
 ```
 
-You will see an answer along with the supporting retrieval trail (chunk -> entity -> chunk).
+If you prefer the standard library tools or do not have Pytest available, fall back to:
+
+```bash
+python -m unittest discover tests
+```
+
+Aim to cover happy-path flows plus edge cases such as empty corpora, chunk boundary handling, and retrieval score blending. Snapshot top-ranked chunk IDs when you add regression questions to guard against accidental behaviour changes.
 
 ## Practice Ideas
 
@@ -80,7 +112,6 @@ You will see an answer along with the supporting retrieval trail (chunk -> entit
 4. **Evaluate**: design a small Q&A set and compare pure vector search versus graph-augmented answers.
 
 ## Learning Checklist
-
 - [ ] Understand how GraphRAG differs from vanilla RAG.
 - [ ] Be able to explain each pipeline stage with code references.
 - [ ] Run the scripts and inspect graph nodes and edges.
